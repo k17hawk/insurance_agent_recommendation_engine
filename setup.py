@@ -5,9 +5,9 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 __version__ = "0.0.0"
 
-REPO_NAME = "Template_Deep_Learning"
-AUTHOR_USER_NAME = "roshikdahal"
-SRC_REPO = "deeplearning"
+REPO_NAME = "insurance_agent_recommendation_engine"
+AUTHOR_USER_NAME = "k17hawk"
+SRC_REPO = "insurance _agent"
 AUTHOR_EMAIL = "kumardahal536@gmail.com"
 
 setuptools.setup(
@@ -15,7 +15,7 @@ setuptools.setup(
     version=__version__,
     author=AUTHOR_USER_NAME,
     author_email=AUTHOR_EMAIL,
-    description="A  python package for CNN app",
+    description="An agentic ai for trading",
     long_description=long_description,
     long_description_content="text/markdown",
     url=f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}",
