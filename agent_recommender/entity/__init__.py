@@ -1,0 +1,1 @@
+from agent_recommender.entity.config_entity import DataIngestionConfig
