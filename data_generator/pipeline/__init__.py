@@ -1,0 +1,1 @@
+from data_generator.pipeline.generator_pipeline import TrainingPipeline

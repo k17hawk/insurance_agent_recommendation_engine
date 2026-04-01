@@ -6,27 +6,26 @@ import logging
 
 logging.basicConfig(level=logging.INFO,format = '[%(asctime)s]: %(message)s:')
 
-package_name = "insurance_agent_recommendation_engine"
+package_name = "agent_recommender"
 
 list_of_files = [
     ".github/workflows/.gitkeep", #for empty folder just create .gitkeep file so that it will stored in gitub
-    f"src/{package_name}/__init__.py",
-    f"src/{package_name}/components/__init__.py",
-    f"src/{package_name}/utils/__init__.py",
-    f"src/{package_name}/config/__init__.py",
-    f"src/{package_name}/pipeline/__init__.py",
-    f"src/{package_name}/entity/__init__.py",
-    f"src/{package_name}/constants/__init__.py",
+    f"{package_name}/__init__.py",
+    f"{package_name}/components/__init__.py",
+    f"{package_name}/utils/__init__.py",
+    f"{package_name}/config/__init__.py",
+    f"{package_name}/pipeline/__init__.py",
+    f"{package_name}/entity/__init__.py",
+    f"{package_name}/constants/__init__.py",
     "tests/__init__.py",
     "tests/unit/__init__.py",
     "tests/integration/__init__.py",
-    "configs/config.yaml",  #configuration
+    "generator_configs/config.yaml",  #configuration
     "dvc.yaml",             #for dvc pipeline
     "params.yaml",          #training parameter yaml
     "init_setup.sh",        #shell script for creation of environment
     "requiremets.txt",      #
-    "requirements_dev.txt", #for creation of development steps
-    "setup.py",             #
+    "requirements_dev.txt", #for creation of development steps            #
     "setup.cfg",            #setup config
     "pyproject.toml",       #for python packages only
     "tox.ini",              #testing of project locally

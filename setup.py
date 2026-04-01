@@ -6,8 +6,8 @@ with open("README.md", "r", encoding="utf-8") as f:
 __version__ = "0.0.0"
 
 REPO_NAME = "insurance_agent_recommendation_engine"
-AUTHOR_USER_NAME = "k17hawk"
-SRC_REPO = "insurance _agent"
+AUTHOR_USER_NAME = "roshikdahal"
+SRC_REPO = "agent_recommender"
 AUTHOR_EMAIL = "kumardahal536@gmail.com"
 
 setuptools.setup(
@@ -15,13 +15,13 @@ setuptools.setup(
     version=__version__,
     author=AUTHOR_USER_NAME,
     author_email=AUTHOR_EMAIL,
-    description="An agentic ai for trading",
+    description="an insurance agent recommendation engine",
     long_description=long_description,
     long_description_content="text/markdown",
     url=f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}",
     project_urls={
         "Bug Tracker": f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}/issues",
     },
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src")
+    package_dir={"": SRC_REPO},
+    packages=setuptools.find_packages(where=SRC_REPO)
 )

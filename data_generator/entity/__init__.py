@@ -1,0 +1,1 @@
+from src.insurance_agent_recommendation_engine.entity.config_entity import BrokerConfig
