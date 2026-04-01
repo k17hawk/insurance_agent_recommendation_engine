@@ -1,4 +1,4 @@
-from agent_recommender.pipeline.stg_1_data_pipeline import main as run_data_ingestion
+from agent_recommender.pipeline.stg_1_data_ingestion import main as run_data_ingestion
 from agent_recommender.pipeline.stg_2_data_validation import main as run_data_validation
 from agent_recommender import logger
 

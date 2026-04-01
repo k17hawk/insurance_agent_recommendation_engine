@@ -9,9 +9,13 @@ def main():
     config = ConfigurationManager()
     data_ingestion_config = config.get_data_ingestion_config()
     data_ingestion = DataIngestion(config=data_ingestion_config)
+    
     data_ingestion.load_raw_data()
     data_ingestion.handle_reentry_leads()
     data_ingestion.handle_orphan_brokers()
+    data_ingestion.calculate_utilization()
+    data_ingestion.clean_assignments()
+    data_ingestion.clean_counterfactual()
     data_ingestion.save_preprocessed_data()
 
 
