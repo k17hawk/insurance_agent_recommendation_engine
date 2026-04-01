@@ -13,3 +13,32 @@ data_transformation:
   root_dir: artifacts/data_transformation
   preprocessed_dir: artifacts/data_ingestion/preprocessed
   transformed_dir: artifacts/data_transformation/transformed
+
+model_training:
+  root_dir: artifacts/model_training
+  transformed_data_dir: artifacts/data_transformation/transformed
+  model_dir: artifacts/model_training/models
+  reports_dir: artifacts/model_training/reports
+  seed: 42
+  embedding_dim: 64
+  hidden_dim: 128
+  dropout: 0.3
+  learning_rate: 0.001
+  batch_size: 512
+  epochs: 30
+  focal_alpha: 0.85
+  focal_gamma: 3.0
+
+model_evaluation:
+  root_dir: artifacts/model_evaluation
+  model_dir: artifacts/model_training/models
+  transformed_data_dir: artifacts/data_transformation/transformed
+  reports_dir: artifacts/model_evaluation/reports
+  metrics_file: artifacts/model_evaluation/metrics.json
+  threshold: 0.5
+
+model_push:
+  root_dir: artifacts/model_push
+  model_dir: artifacts/model_training/models
+  push_dir: models/production
+  version: v1.0.0
