@@ -1,136 +1,114 @@
-import shutil
 import json
-import torch
+import shutil
+import re
 from pathlib import Path
 from datetime import datetime
 from agent_recommender import logger
 from agent_recommender.entity.config_entity import ModelPushConfig
-from agent_recommender.utils.utility import create_directories
-
 
 class ModelPush:
     def __init__(self, config: ModelPushConfig):
         self.config = config
-        self.version = config.version
-        
+        self.new_metrics = self._load_metrics(config.model_dir / "metrics.json")
+        self.best_metrics = self._load_best_metrics()
+        self.version = None
+
+    def _load_metrics(self, path):
+        if path and path.exists():
+            with open(path, 'r') as f:
+                return json.load(f)
+        return None
+
+    def _load_best_metrics(self):
+        best_dir = self.config.push_dir / "best"
+        if best_dir.exists():
+            metrics_file = best_dir / "metrics.json"
+            return self._load_metrics(metrics_file)
+        return None
+
+    def _get_next_version(self):
+        """Auto-increment patch version based on existing version directories."""
+        existing = [d.name for d in self.config.push_dir.iterdir()
+                    if d.is_dir() and re.match(r'v\d+\.\d+\.\d+', d.name)]
+        if not existing:
+            return "v1.0.0"
+        # Sort by version tuple
+        def version_key(v):
+            return [int(x) for x in v[1:].split('.')]
+        existing.sort(key=version_key)
+        latest = existing[-1]
+        parts = latest[1:].split('.')
+        parts[-1] = str(int(parts[-1]) + 1)
+        return f"v{'.'.join(parts)}"
+
+    def is_new_model_better(self):
+        if self.best_metrics is None:
+            logger.info("No existing best model found. This model will become the champion.")
+            return True
+        # Compare primary metric: AUC (you can change to F1 or custom)
+        new_auc = self.new_metrics.get("auc", 0)
+        best_auc = self.best_metrics.get("auc", 0)
+        return new_auc > best_auc
+
     def push_model(self):
-        """Push model to production directory"""
-        logger.info(f"Pushing model version {self.version} to production...")
-        
-        # Create push directory with version
+        if not self.is_new_model_better():
+            logger.info("New model is not better than current best. Skipping push.")
+            return self
+
+        self.version = self._get_next_version()
+        logger.info(f"New model is better! Pushing as version {self.version}")
+
         push_dir = self.config.push_dir / self.version
-        create_directories([push_dir])
-        
+        push_dir.mkdir(parents=True, exist_ok=True)
+
         # Copy model files
-        model_files = ["two_tower_best.pt", "model_config.json"]
-        
-        for file in model_files:
+        for file in ["two_tower_best.pt", "model_config.json", "metrics.json"]:
             src = self.config.model_dir / file
-            dst = push_dir / file
-            
             if src.exists():
-                shutil.copy2(src, dst)
-                logger.info(f"Copied {file} to {dst}")
+                shutil.copy2(src, push_dir / file)
             else:
-                logger.warning(f"File not found: {src}")
-        
-        # Create version metadata
+                logger.warning(f"File {file} not found, skipping")
+
+        # Create metadata
         metadata = {
             "version": self.version,
             "push_date": datetime.now().isoformat(),
-            "model_type": "TwoTowerModel",
-            "source_dir": str(self.config.model_dir),
-            "files": model_files
+            "metrics": self.new_metrics,
+            "source_dir": str(self.config.model_dir)
         }
-        
-        # Load model config if exists
-        config_path = push_dir / "model_config.json"
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                model_config = json.load(f)
-            metadata["model_config"] = model_config
-        
-        # Save metadata
         with open(push_dir / "metadata.json", "w") as f:
             json.dump(metadata, f, indent=4)
-        
-        logger.info(f"Metadata saved to {push_dir / 'metadata.json'}")
-        
-        return self
-    
-    def create_latest_symlink(self):
-        """Create a 'latest' symlink pointing to the current version"""
-        logger.info("Creating latest symlink...")
-        
+
+        # Update best symlink
+        best_link = self.config.push_dir / "best"
+        if best_link.exists() or best_link.is_symlink():
+            best_link.unlink()
+        best_link.symlink_to(push_dir, target_is_directory=True)
+
+        # Update latest symlink (optional, points to newest version)
         latest_link = self.config.push_dir / "latest"
-        current_version_dir = self.config.push_dir / self.version
-        
-        # Remove existing symlink if it exists
-        if latest_link.exists():
-            if latest_link.is_symlink():
-                latest_link.unlink()
-            elif latest_link.is_dir():
-                shutil.rmtree(latest_link)
-        
-        # Create new symlink
-        try:
-            latest_link.symlink_to(current_version_dir, target_is_directory=True)
-            logger.info(f"Created symlink {latest_link} -> {current_version_dir}")
-        except Exception as e:
-            logger.warning(f"Could not create symlink: {e}")
-            logger.info("Continuing without symlink...")
-        
+        if latest_link.exists() or latest_link.is_symlink():
+            latest_link.unlink()
+        latest_link.symlink_to(push_dir, target_is_directory=True)
+
+        # Update versions.json
+        self._update_versions_json()
+
+        logger.info(f"Model version {self.version} pushed and set as best.")
         return self
-    
-    def save_version_info(self):
-        """Save version information to a file"""
-        logger.info("Saving version information...")
-        
-        version_file = self.config.push_dir / "versions.json"
-        
-        # Load existing versions if any
-        if version_file.exists():
-            with open(version_file, 'r') as f:
-                versions = json.load(f)
+
+    def _update_versions_json(self):
+        versions_file = self.config.push_dir / "versions.json"
+        if versions_file.exists():
+            with open(versions_file, 'r') as f:
+                data = json.load(f)
         else:
-            versions = {"versions": []}
-        
-        # Add new version
-        versions["versions"].append({
+            data = {"versions": []}
+        data["versions"].append({
             "version": self.version,
             "push_date": datetime.now().isoformat(),
-            "path": str(self.config.push_dir / self.version)
+            "path": str(self.config.push_dir / self.version),
+            "metrics": self.new_metrics
         })
-        
-        # Keep only last 5 versions
-        versions["versions"] = versions["versions"][-5:]
-        
-        # Save
-        with open(version_file, 'w') as f:
-            json.dump(versions, f, indent=4)
-        
-        logger.info(f"Version info saved to {version_file}")
-        
-        return self
-    
-    def validate_push(self):
-        """Validate that model was pushed successfully"""
-        logger.info("Validating model push...")
-        
-        push_dir = self.config.push_dir / self.version
-        
-        # Check if all required files exist
-        required_files = ["two_tower_best.pt", "model_config.json", "metadata.json"]
-        missing_files = []
-        
-        for file in required_files:
-            if not (push_dir / file).exists():
-                missing_files.append(file)
-        
-        if missing_files:
-            logger.error(f"Missing files in push: {missing_files}")
-            raise FileNotFoundError(f"Push validation failed: missing {missing_files}")
-        
-        logger.info(f"Push validation successful! Model version {self.version} is ready for production.")
-        
-        return self
+        with open(versions_file, 'w') as f:
+            json.dump(data, f, indent=4)

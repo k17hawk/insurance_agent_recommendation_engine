@@ -362,6 +362,11 @@ class ModelTraining:
         """Main training loop"""
         logger.info("Starting training...")
         
+        # Ensure dataloaders exist (safety check)
+        if not hasattr(self, 'train_loader') or self.train_loader is None:
+            logger.warning("Dataloaders not found. Creating them now...")
+            self.create_dataloaders()
+        
         best_val_auc = 0.0
         best_epoch = 0
         history = []
@@ -407,7 +412,8 @@ class ModelTraining:
         history_df = pd.DataFrame(history)
         history_df.to_csv(self.config.reports_dir / "training_history.csv", index=False)
         
-        return self
+        # Return model and history for pipeline
+        return self.model, history
     
     def find_optimal_threshold(self):
         """Find optimal threshold on validation set"""

@@ -1,86 +1,70 @@
 from pathlib import Path
-from agent_recommender.constants import *
-from agent_recommender.utils.utility import read_yaml, create_directories
-from agent_recommender.entity.config_entity import DataIngestionConfig, DataValidationConfig,DataTransformationConfig,ModelTrainingConfig,ModelEvaluationConfig, ModelPushConfig    
-
+from agent_recommender.constants import CONFIG_FILE_PATH
+from agent_recommender.utils.utility import read_yaml
+from agent_recommender.entity.config_entity import (
+    DataIngestionConfig, DataValidationConfig, DataTransformationConfig,
+    ModelTrainingConfig, ModelEvaluationConfig, ModelPushConfig
+)
 
 class ConfigurationManager:
     def __init__(self, config_filepath=CONFIG_FILE_PATH):
         self.config = read_yaml(config_filepath)
 
     def get_data_ingestion_config(self) -> DataIngestionConfig:
-        config = self.config.data_ingestion
-
-        data_ingestion_config = DataIngestionConfig(
-            root_dir=Path(config.root_dir),
-            preprocessed_dir=Path(config.preprocessed_dir)
+        cfg = self.config.data_ingestion
+        return DataIngestionConfig(
+            root_dir=Path(cfg.root_dir),
+            preprocessed_dir=Path(cfg.preprocessed_dir)
         )
-
-        return data_ingestion_config
 
     def get_data_validation_config(self) -> DataValidationConfig:
-        config = self.config.data_validation
-
-        data_validation_config = DataValidationConfig(
-            root_dir=Path(config.root_dir),
-            status_file=Path(config.status_file)
+        cfg = self.config.data_validation
+        return DataValidationConfig(
+            root_dir=Path(cfg.root_dir),
+            status_file=Path(cfg.status_file)
         )
 
-        return data_validation_config
-    
     def get_data_transformation_config(self) -> DataTransformationConfig:
-        config = self.config.data_transformation
-
-        data_transformation_config = DataTransformationConfig(
-            root_dir=Path(config.root_dir),
-            preprocessed_dir=Path(config.preprocessed_dir),
-            transformed_dir=Path(config.transformed_dir)
+        cfg = self.config.data_transformation
+        return DataTransformationConfig(
+            root_dir=Path(cfg.root_dir),
+            preprocessed_dir=Path(cfg.preprocessed_dir),
+            transformed_dir=Path(cfg.transformed_dir)
         )
-        return data_transformation_config
 
     def get_model_training_config(self) -> ModelTrainingConfig:
-        config = self.config.model_training
-
-        model_training_config = ModelTrainingConfig(
-            root_dir=Path(config.root_dir),
-            transformed_data_dir=Path(config.transformed_data_dir),
-            model_dir=Path(config.model_dir),
-            reports_dir=Path(config.reports_dir),
-            seed=config.seed,
-            embedding_dim=config.embedding_dim,
-            hidden_dim=config.hidden_dim,
-            dropout=config.dropout,
-            learning_rate=config.learning_rate,
-            batch_size=config.batch_size,
-            epochs=config.epochs,
-            focal_alpha=config.focal_alpha,
-            focal_gamma=config.focal_gamma
+        cfg = self.config.model_training
+        return ModelTrainingConfig(
+            root_dir=Path(cfg.root_dir),
+            transformed_data_dir=Path(cfg.transformed_data_dir),
+            model_dir=Path(cfg.model_dir),
+            reports_dir=Path(cfg.reports_dir),
+            seed=cfg.seed,
+            embedding_dim=cfg.embedding_dim,
+            hidden_dim=cfg.hidden_dim,
+            dropout=cfg.dropout,
+            learning_rate=cfg.learning_rate,
+            batch_size=cfg.batch_size,
+            epochs=cfg.epochs,
+            focal_alpha=cfg.focal_alpha,
+            focal_gamma=cfg.focal_gamma
         )
 
-        return model_training_config
-    
     def get_model_evaluation_config(self) -> ModelEvaluationConfig:
-        config = self.config.model_evaluation
-
-        model_evaluation_config = ModelEvaluationConfig(
-            root_dir=Path(config.root_dir),
-            model_dir=Path(config.model_dir),
-            transformed_data_dir=Path(config.transformed_data_dir),
-            reports_dir=Path(config.reports_dir),
-            metrics_file=Path(config.metrics_file),
-            threshold=config.threshold
+        cfg = self.config.model_evaluation
+        return ModelEvaluationConfig(
+            root_dir=Path(cfg.root_dir),
+            model_dir=Path(cfg.model_dir),
+            test_data_dir=Path(cfg.test_data_dir),
+            reports_dir=Path(cfg.reports_dir),
+            metrics_file=Path(cfg.metrics_file),
+            threshold=cfg.threshold
         )
 
-        return model_evaluation_config
-    
     def get_model_push_config(self) -> ModelPushConfig:
-        config = self.config.model_push
-
-        model_push_config = ModelPushConfig(
-            root_dir=Path(config.root_dir),
-            model_dir=Path(config.model_dir),
-            push_dir=Path(config.push_dir),
-            version=config.version
+        cfg = self.config.model_push
+        return ModelPushConfig(
+            root_dir=Path(cfg.root_dir),
+            model_dir=Path(cfg.model_dir),
+            push_dir=Path(cfg.push_dir)
         )
-
-        return model_push_config

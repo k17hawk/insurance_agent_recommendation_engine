@@ -17,7 +17,7 @@ class DataValidationConfig:
 class DataTransformationConfig:
     root_dir: Path
     preprocessed_dir: Path
-    transformed_dir: Path
+    transformed_dir: Path   
 
 @dataclass(frozen=True)
 class ModelTrainingConfig:
@@ -39,7 +39,7 @@ class ModelTrainingConfig:
 class ModelEvaluationConfig:
     root_dir: Path
     model_dir: Path
-    transformed_data_dir: Path
+    test_data_dir: Path
     reports_dir: Path
     metrics_file: Path
     threshold: float
@@ -50,4 +50,3 @@ class ModelPushConfig:
     root_dir: Path
     model_dir: Path
     push_dir: Path
-    version: str

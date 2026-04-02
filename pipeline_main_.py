@@ -8,37 +8,31 @@ from agent_recommender import logger
 
 if __name__ == "__main__":
     try:
-        # Stage 1: Data Ingestion
         logger.info("=" * 50)
         logger.info("Running Stage 1: Data Ingestion")
         logger.info("=" * 50)
         run_data_ingestion()
         
-        # Stage 2: Data Validation
         logger.info("=" * 50)
         logger.info("Running Stage 2: Data Validation")
         logger.info("=" * 50)
         run_data_validation()
         
-        # Stage 3: Data Transformation
         logger.info("=" * 50)
         logger.info("Running Stage 3: Data Transformation")
         logger.info("=" * 50)
         run_data_transformation()
         
-        # Stage 4: Model Training
         logger.info("=" * 50)
         logger.info("Running Stage 4: Model Training")
         logger.info("=" * 50)
         run_model_training()
         
-        # Stage 5: Model Evaluation
         logger.info("=" * 50)
         logger.info("Running Stage 5: Model Evaluation")
         logger.info("=" * 50)
         run_model_evaluation()
         
-        # Stage 6: Model Push
         logger.info("=" * 50)
         logger.info("Running Stage 6: Model Push")
         logger.info("=" * 50)

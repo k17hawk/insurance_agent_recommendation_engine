@@ -4,6 +4,7 @@ from pathlib import Path
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 import joblib
+import json
 from agent_recommender import logger
 from agent_recommender.entity.config_entity import DataTransformationConfig
 from agent_recommender.utils.utility import create_directories
@@ -29,6 +30,11 @@ class DataTransformation:
         self.quality_scales = {}
         self.outlier_bounds = {}
         self.max_quote_value = None
+        
+        # Define feature lists (will be filled after saving)
+        self.client_features = None
+        self.broker_features = None
+        self.interaction_features = None
         
     def load_data(self):
         """Load preprocessed data from data_ingestion stage"""
@@ -434,6 +440,78 @@ class DataTransformation:
         logger.info(f"All transformers saved to {transformers_dir}")
         return self
     
+    def save_numpy_arrays(self):
+        """Save train and test sets as numpy arrays for model training/evaluation."""
+        logger.info("Saving numpy arrays for model training...")
+        
+        # Define feature lists (must match what the model expects)
+        self.client_features = [
+            "quote_value", "lead_difficulty", "sophistication", "patience_hours",
+            "digital_engagement_score", "tenure_years", "log_quote_value", "log_patience_hours",
+            "month", "hour_of_day", "lead_dayofweek", "lead_quarter", "is_weekend",
+            "insurance_type_enc", "claims_risk", "multi_product_intent",
+            "insurance_type_missing", "language_missing", "tenure_years_missing",
+            "digital_engagement_score_missing"
+        ]
+        
+        self.broker_features = [
+            "skill_level", "conversion_rate", "csat_score", "reliability", "efficiency",
+            "avg_response_time", "burnout_risk", "commission_rate", "cost_per_lead",
+            "utilization", "ribo_licensed", "is_new_broker", "expertise_auto",
+            "expertise_home", "expertise_bundle", "broker_quality_score",
+            "lang_Bilingual", "lang_English", "lang_French"
+        ]
+        
+        self.interaction_features = [
+            "expertise_match", "language_match", "workload_ratio", "quality_x_value",
+            "position_bias", "interaction_number", "responded", "response_time_bucket_ord",
+            "log_response_time_hours", "ribo_x_expertise", "claims_x_skill", "tenure_x_quality"
+        ]
+        
+        # Filter to columns that exist in the DataFrames
+        self.client_features = [c for c in self.client_features if c in self.train_df.columns]
+        self.broker_features = [c for c in self.broker_features if c in self.train_df.columns]
+        self.interaction_features = [c for c in self.interaction_features if c in self.train_df.columns]
+        
+        # Train arrays
+        train_client = self.train_df[self.client_features].values.astype(np.float32)
+        train_broker = self.train_df[self.broker_features].values.astype(np.float32)
+        train_interaction = self.train_df[self.interaction_features].values.astype(np.float32)
+        train_labels = self.train_df["converted"].values.astype(np.float32)
+        
+        # Test arrays
+        test_client = self.test_df[self.client_features].values.astype(np.float32)
+        test_broker = self.test_df[self.broker_features].values.astype(np.float32)
+        test_interaction = self.test_df[self.interaction_features].values.astype(np.float32)
+        test_labels = self.test_df["converted"].values.astype(np.float32)
+        
+        # Save to numpy directory
+        numpy_dir = self.config.transformed_dir
+        np.save(numpy_dir / "train_client.npy", train_client)
+        np.save(numpy_dir / "train_broker.npy", train_broker)
+        np.save(numpy_dir / "train_interaction.npy", train_interaction)
+        np.save(numpy_dir / "train_labels.npy", train_labels)
+        
+        np.save(numpy_dir / "test_client.npy", test_client)
+        np.save(numpy_dir / "test_broker.npy", test_broker)
+        np.save(numpy_dir / "test_interaction.npy", test_interaction)
+        np.save(numpy_dir / "test_labels.npy", test_labels)
+        
+        # Also save feature lists as JSON for the API server
+        feature_lists = {
+            "client_features": self.client_features,
+            "broker_features": self.broker_features,
+            "interaction_features": self.interaction_features
+        }
+        with open(numpy_dir / "feature_lists.json", "w") as f:
+            json.dump(feature_lists, f, indent=2)
+        
+        logger.info(f"Numpy arrays saved to {numpy_dir}")
+        logger.info(f"Train shapes: client {train_client.shape}, broker {train_broker.shape}, inter {train_interaction.shape}")
+        logger.info(f"Test shapes: client {test_client.shape}, broker {test_broker.shape}, inter {test_interaction.shape}")
+        
+        return self
+    
     def transform_train_test(self):
         """Apply all transformations to train and test sets separately"""
         logger.info("Applying transformations to train and test sets...")
@@ -503,6 +581,9 @@ class DataTransformation:
         # Save all fitted transformers
         self.save_transformers()
         
+        # Save numpy arrays for model training/evaluation
+        self.save_numpy_arrays()
+        
         return self
     
     def split_positive_negative(self):
@@ -522,8 +603,8 @@ class DataTransformation:
         return self
     
     def save_transformed_data(self):
-        """Save all transformed datasets"""
-        logger.info("Saving transformed data...")
+        """Save all transformed datasets as CSV (for inspection)"""
+        logger.info("Saving transformed data as CSV...")
         
         # Create transformed directory
         create_directories([self.config.transformed_dir])

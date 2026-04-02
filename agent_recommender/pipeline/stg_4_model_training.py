@@ -1,31 +1,45 @@
 from agent_recommender.config.configuration import ConfigurationManager
 from agent_recommender.components.model_training import ModelTraining
 from agent_recommender import logger
-from agent_recommender.utils.utility import create_directories
 
-STAGE_NAME = "Model Training stage"
-
+STAGE_NAME = "Model Training Stage"
 
 def main():
     config = ConfigurationManager()
-    model_training_config = config.get_model_training_config()
+    training_config = config.get_model_training_config()
     
-    # Create directories
-    create_directories([model_training_config.model_dir])
-    create_directories([model_training_config.reports_dir])
+    trainer = ModelTraining(config=training_config)
     
-    model_training = ModelTraining(config=model_training_config)
+    # Step 1: Load data
+    trainer.load_data()
     
-    model_training.load_data() \
-        .filter_columns() \
-        .create_dataloaders() \
-        .build_model() \
-        .setup_training() \
-        .train() \
-        .find_optimal_threshold() \
-        .evaluate() \
-        .save_model()
-
+    # Step 2: Filter columns (ensure all features exist and are numeric)
+    trainer.filter_columns()
+    
+    # Step 3: Create dataloaders
+    trainer.create_dataloaders()
+    
+    # Step 4: Build model
+    trainer.build_model()
+    
+    # Step 5: Setup loss, optimizer, scheduler
+    trainer.setup_training()
+    
+    # Step 6: Train the model (returns model and history)
+    model, history = trainer.train()
+    
+    # Step 7: Find optimal threshold on validation set
+    trainer.find_optimal_threshold()
+    
+    # Step 8: Evaluate on test set
+    trainer.evaluate()
+    
+    # Step 9: Save final model and config
+    trainer.save_model()
+    
+    logger.info(f"Training completed. Best model saved to {training_config.model_dir}")
+    
+    return model, history
 
 if __name__ == '__main__':
     try:
